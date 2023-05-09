@@ -74,8 +74,9 @@ Unit=watchlog.service
 WantedBy=multi-user.target
 EOF
 
-    # Запускаем таймер
+    # Запускаем таймер и сервис
     systemctl start watchlog.timer
+    systemctl start watchlog.service
 
     # Устанавливаем spawn-fcgi и необходимые для него пакеты
     yum install epel-release -y && yum install spawn-fcgi php php-cli mod_fcgid httpd -y
@@ -113,7 +114,7 @@ EOF
 
     # Дополняем юнит apache httpd возможностью запустить несколько инстансов сервера с разными конфигами (через параметр параметр %I)
     cp /usr/lib/systemd/system/httpd.service /etc/systemd/system/httpd.service
-    sed -i '#Environment=LANG=C#a\ EnvironmentFile=/etc/sysconfig/httpd-%I' /etc/systemd/system/httpd.service
+    sed -i '/^Environment.*/a EnvironmentFile=/etc/sysconfig/httpd-%I' /etc/systemd/system/httpd.service
 
     # Создаем файлы окружения и задаем опцию для запуска веб-сервера с необходимым конфиг файлом
     cat << EOF > /etc/sysconfig/httpd-first
@@ -128,9 +129,10 @@ EOF
     cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/first.conf
     cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/second.conf
 
-    sed -i '#ServerRoot "/etc/httpd"#a\ PidFile "/var/run/httpd-first.pid"' /etc/httpd/conf/first.conf
-    sed -i '#ServerRoot "/etc/httpd"#a\ PidFile "/var/run/httpd-second.pid"' /etc/httpd/conf/second.conf
-    sed -i 's#Listen 80#Listen 8080#' /etc/httpd/conf/second.conf
+    sed -i '/^ServerRoot.*/a PidFile "/var/run/httpd-first.pid"' /etc/httpd/conf/first.conf
+    sed -i '/^ServerRoot.*/a PidFile "/var/run/httpd-second.pid"' /etc/httpd/conf/second.conf
+
+    sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/second.conf
 
     # Запускаем веб-серверы
     systemctl start httpd@first
