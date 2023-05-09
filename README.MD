@@ -14,6 +14,6 @@
 ## Заметки по скрипту
 [Правила использования EOF / Here Documents](https://www.gnu.org/software/bash/manual/bash.html#Here-Documents) c кавычками и без:\
 If any part of *word* is quoted, the *delimiter* is the result of quote removal on *word*, and the lines in the here-document are not expanded.\
-If *word* is unquoted, all lines of the here-document are subjected to parameter expansion, command substitution, and arithmetic expansion, the character sequence `\newline` is ignored, and ‘\’ must be used to quote the characters ‘\’, ‘$’, and '\`'. \
+If *word* is unquoted, all lines of the here-document are subjected to parameter expansion, command substitution, and arithmetic expansion, the character sequence `\newline` is ignored, and ‘\’ must be used to quote the characters ‘\’, ‘$’, and '\`'.
 
 Обратить внимание на правила регулярных выражений и экранирование специальных символов в `sed`, особенно при выполнении команды append (*a*)
