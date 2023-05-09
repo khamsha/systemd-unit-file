@@ -112,7 +112,7 @@ EOF
     # Запускаем spawn-fcgi
     systemctl start spawn-fcgi
 
-    # Дополняем юнит apache httpd возможностью запустить несколько инстансов сервера с разными конфигами (через параметр параметр %I)
+    # Дополняем юнит apache httpd возможностью запустить несколько инстансов сервера с разными конфигами (через параметр %I)
     cp /usr/lib/systemd/system/httpd.service /etc/systemd/system/httpd.service
     sed -i '/^Environment.*/a EnvironmentFile=/etc/sysconfig/httpd-%I' /etc/systemd/system/httpd.service
 
@@ -131,7 +131,6 @@ EOF
 
     sed -i '/^ServerRoot.*/a PidFile "/var/run/httpd-first.pid"' /etc/httpd/conf/first.conf
     sed -i '/^ServerRoot.*/a PidFile "/var/run/httpd-second.pid"' /etc/httpd/conf/second.conf
-
     sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/second.conf
 
     # Запускаем веб-серверы
