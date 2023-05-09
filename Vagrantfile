@@ -7,13 +7,13 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "centos8-kernel-ml"
-  config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.box = "centos/stream8"
+  config.vm.synced_folder ".", "/vagrant"
 
   config.vm.provision "shell", inline: <<-SHELL
     sudo -i
     # Создаем файл с конфигурацией для нашего сервиса
-    cat << EOF > /etc/sysconfig/watchlog
+    cat << 'EOF' > /etc/sysconfig/watchlog
 # Configuration file for my watchlog service
 # Place it to /etc/sysconfig
 
@@ -23,7 +23,7 @@ LOG=/var/log/watchlog.log
 EOF
 
     # Создаем файл с логами
-    cat << EOF > /var/log/watchlog.log
+    cat << 'EOF' > /var/log/watchlog.log
 Some text
 And some more text
 And some other logs
@@ -31,7 +31,7 @@ ALERT
 EOF
 
     # Содаем скрипт сервиса
-    cat << EOF > /opt/watchlog.sh
+    cat << 'EOF' > /opt/watchlog.sh
 #!/bin/bash
 
 WORD=$1
@@ -50,7 +50,7 @@ EOF
     chmod +x /opt/watchlog.sh
     
     # Создаем юнит для сервиса
-    cat << EOF > /etc/systemd/system/watchlog.service
+    cat << 'EOF' > /etc/systemd/system/watchlog.service
 [Unit]
 Description=My watchlog service
     
@@ -61,7 +61,7 @@ ExecStart=/opt/watchlog.sh $WORD $LOG
 EOF
 
     # Создаем юнит для таймера
-    cat << EOF > /etc/systemd/system/watchlog.timer
+    cat << 'EOF' > /etc/systemd/system/watchlog.timer
 [Unit]
 Description=Run watchlog script every 30 second
     
@@ -81,7 +81,7 @@ EOF
     yum install epel-release -y && yum install spawn-fcgi php php-cli mod_fcgid httpd -y
 
     # Переписываем файл /etc/sysconfig/spawn-fcgi
-    cat << EOF > /etc/sysconfig/spawn-fcgi
+    cat << 'EOF' > /etc/sysconfig/spawn-fcgi
 # You must set some working options before the "spawn-fcgi" service will work.
 # If SOCKET points to a file, then this file is cleaned up by the init script.
 #
@@ -92,7 +92,7 @@ OPTIONS="-u apache -g apache -s $SOCKET -S -M 0600 -C 32 -F 1 -- /usr/bin/php-cg
 EOF
 
     # Создаем юнит для сервиса spawn-fcgi
-    cat << EOF > /etc/systemd/system/spawn-fcgi.service
+    cat << 'EOF' > /etc/systemd/system/spawn-fcgi.service
 [Unit]
 Description=Spawn-fcgi startup service
 After=network.target
@@ -112,9 +112,8 @@ EOF
     systemctl start spawn-fcgi
 
     # Дополняем юнит apache httpd возможностью запустить несколько инстансов сервера с разными конфигами (через параметр параметр %I)
-    SYSTEMD_EDITOR=tee systemctl edit httpd <<EOF
-EnvironmentFile=/etc/sysconfig/httpd-%I
-EOF
+    cp /usr/lib/systemd/system/httpd.service /etc/systemd/system/httpd.service
+    sed -i '#Environment=LANG=C#a\ EnvironmentFile=/etc/sysconfig/httpd-%I' /etc/systemd/system/httpd.service
 
     # Создаем файлы окружения и задаем опцию для запуска веб-сервера с необходимым конфиг файлом
     cat << EOF > /etc/sysconfig/httpd-first
@@ -129,9 +128,9 @@ EOF
     cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/first.conf
     cp /etc/httpd/conf/httpd.conf /etc/httpd/conf/second.conf
 
-    sed -i '*ServerRoot "/etc/httpd"*a PidFile "/var/run/httpd-first.pid"' /etc/httpd/conf/first.conf
-    sed -i '*ServerRoot "/etc/httpd"*a PidFile "/var/run/httpd-second.pid"' /etc/httpd/conf/second.conf
-    sed -i 's*Listen 80*Listen 8080*' /etc/httpd/conf/second.conf
+    sed -i '#ServerRoot "/etc/httpd"#a\ PidFile "/var/run/httpd-first.pid"' /etc/httpd/conf/first.conf
+    sed -i '#ServerRoot "/etc/httpd"#a\ PidFile "/var/run/httpd-second.pid"' /etc/httpd/conf/second.conf
+    sed -i 's#Listen 80#Listen 8080#' /etc/httpd/conf/second.conf
 
     # Запускаем веб-серверы
     systemctl start httpd@first
